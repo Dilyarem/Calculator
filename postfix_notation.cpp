@@ -2,10 +2,24 @@
 #include <queue>
 #include <stack>
 #include <stdexcept>
+#include <cmath>
 
 #include "numeral_system.h"
 #include "overflowing.h"
 
+
+int FloorRoundingDivision(int a, int b);
+
+bool CheckIfMinusForNegative(uint minus_idx, const std::string& arithmetic_expression) {
+    int prev_idx = static_cast<int>(minus_idx) - 1;
+    while (prev_idx >= 0 && arithmetic_expression[prev_idx] == ' ') {
+        --prev_idx;
+    }
+    if (prev_idx < 0 || arithmetic_expression[prev_idx] == '(') {
+        return true;
+    }
+    return false;
+}
 
 std::queue<std::string> InputToPostfixAndArabic(const std::string& arithmetic_expression) {
     std::queue<std::string> postfix_notation;
@@ -31,7 +45,7 @@ std::queue<std::string> InputToPostfixAndArabic(const std::string& arithmetic_ex
                 postfix_notation.push(arabic);
             }
         } else if (symbol >= '*' && symbol <= '/' ) {
-            if (symbol == '-' && (i == 0 || arithmetic_expression[i-1] == '('))  {
+            if (symbol == '-' && CheckIfMinusForNegative(i, arithmetic_expression))  {
                 is_neg = true;
                 continue;
             }
@@ -93,25 +107,23 @@ int CalculatePostfix(std::queue<std::string> postfix_notation) {
 
             switch (symbol[0]) {
                 case '+': {
-                    CheckSum(a, b);
+                    CheckSumForOverflowing(a, b);
                     numbers.push(a+b);
                     break;
                 }
                 case '-': {
-                    CheckSum(b, -a);
+                    CheckSumForOverflowing(b, -a);
                     numbers.push(b-a);
                     break;
                 }
                 case '*': {
-                    CheckProd(a, b);
+                    CheckProdForOverflowing(a, b);
                     numbers.push(a*b);
                     break;
                 }
                 case '/': {
-                    if (a == 0) {
-                        throw std::logic_error("division by zero");
-                    }
-                    numbers.push(b/a);
+                    int division_result = FloorRoundingDivision(a, b);
+                    numbers.push(division_result);
                     break;
                 }
                 default: {
@@ -129,4 +141,11 @@ int CalculatePostfix(std::queue<std::string> postfix_notation) {
     } else {
         throw std::logic_error("wrong expression");
     }
+}
+
+int FloorRoundingDivision(int a, int b) {
+    if (a == 0) {
+        throw std::logic_error("division by zero");
+    }
+    return std::floor(static_cast<float>(b) / static_cast<float>(a));
 }
